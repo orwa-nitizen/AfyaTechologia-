@@ -1,0 +1,50 @@
+name: RLS Audit
+
+on:
+  push:
+    paths:
+      - 'migrations/**'
+      - 'audit_rls.py'
+      - '.github/workflows/rls-audit.yml'
+  pull_request:
+    paths:
+      - 'migrations/**'
+      - 'audit_rls.py'
+
+jobs:
+  rls-audit:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: afyadb
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres" --health-interval 10s --health-timeout 5s --health-retries 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Wait for Postgres
+        run: |
+          until pg_isready -h localhost -p 5432 -U postgres; do sleep 1; done
+      - name: Install Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+      - name: Install deps
+        run: pip install -r requirements.txt
+      - name: Run migrations
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/afyadb
+        run: |
+          psql "$DATABASE_URL" -f migrations/001_schema.sql
+          psql "$DATABASE_URL" -f migrations/002_rls.sql
+          psql "$DATABASE_URL" -f migrations/003_grants.sql
+      - name: Run RLS audit
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/afyadb
+        run: |
+          python3 audit_rls.py
