@@ -1,18 +1,34 @@
-AfyaTech — Database + RLS security bundle
+# AfyaTech
 
-Overview
-This repo contains a Flask app, Postgres schema with Row-Level Security (RLS), an audit script to validate RLS and a CI workflow to run the audit.
+AfyaTech is a secure Flask and PostgreSQL application built for healthcare data protection. It uses PostgreSQL Row-Level Security, database permissions, automated RLS audits, and a Docker-based production deployment with Gunicorn and Nginx.
 
-Quickstart (local)
-1. Copy .env.example to .env and edit if needed.
-2. docker-compose -f docker-compose.prod.yml up -d db
-3. make init-db
-4. make run
-5. curl -H "X-Tenant-Id: tenant1" -H "X-User-Id: user:alice" http://localhost:8000/patients
+## Features
 
-CI
-The GitHub Actions workflow will run migrations against a Postgres service and run audit_rls.py; commits that create insecure RLS configurations will fail the workflow.
+- Flask web application.
+- PostgreSQL database with Row-Level Security.
+- Automated audit script for RLS validation.
+- GitHub Actions workflow for CI checks.
+- Dockerized development and production setup.
+- Gunicorn and Nginx for secure deployment.
 
-Security notes
-- RLS is the primary row-level control; grant roles are minimal.
-- Audit warns on permissive policies (USING/WITH CHECK = true) and on sensitive tables without RLS.
+## Project Structure
+
+```text
+afyatech/
+├── app.py
+├── audit_rls.py
+├── deploy.sh
+├── Dockerfile
+├── docker-compose.prod.yml
+├── nginx.conf
+├── Makefile
+├── requirements.txt
+├── .env.example
+├── README.md
+├── migrations/
+│   ├── 001_schema.sql
+│   ├── 002_rls.sql
+│   └── 003_grants.sql
+└── .github/
+    └── workflows/
+        └── rls-audit.yml
